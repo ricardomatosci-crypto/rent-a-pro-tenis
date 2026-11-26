@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tênis Rent a Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#f1f5f9;--card:#ffffff;--tx:#0B192C;--mut:#526477;
+  --ac:#0B192C;--ac-soft:#162d4d;--ball:#A3E635;--ball-dk:#84CC16;--onball:#0B192C;
+  --bd:#dce4ec;--court:#1e4d78;--ln:#ffffff;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#07111e;--card:#0f2036;--tx:#f1f5f9;--mut:#94a3b8;
+    --ac:#A3E635;--ac-soft:#173152;--bd:#1e3552;--court:#163d61
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 Barlow,system-ui,-apple-system,"Segoe UI",sans-serif;padding-bottom:98px}
+h1,h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;margin:0;letter-spacing:.2px}
+h1{font-size:26px;font-weight:800;text-transform:uppercase;display:flex;align-items:center;gap:8px;color:#fff}
+h1 span.pro{background:var(--ball);color:var(--onball);padding:1px 7px;border-radius:6px;font-size:21px}
+.top-wrap{background:#0B192C;color:#fff;padding:12px 16px;border-bottom:2px solid var(--ball)}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;max-width:640px;margin:0 auto}
+#hb{display:flex;align-items:center;gap:8px}
+#hb button{position:relative;background:#162d4d;border:1px solid #274773;color:#fff;border-radius:50%;width:38px;height:38px;font-size:17px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+#hb #av{background:var(--ball);color:var(--onball);font-weight:700;border:0}
+#hb .pts-btn{width:auto;border-radius:20px;padding:0 12px;font-size:13px;font-weight:700;background:#162d4d;border:1px solid var(--ball);color:var(--ball);gap:4px}
+.bg{position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font:700 10px/1 Barlow,sans-serif;border-radius:10px;padding:3px 5px;font-style:normal}
+#pn{max-width:640px;margin:0 auto;padding:0 16px}
+h2{font-size:24px;margin:18px 0 8px;text-transform:uppercase}
+main{padding:0 16px;max-width:640px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:10px 0;box-shadow:0 2px 8px rgba(11,25,44,.04)}
+input,textarea,select{width:100%;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin:4px 0}
+textarea{min-height:84px;resize:vertical}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--ball);color:var(--onball);border:0;border-radius:10px;padding:12px 14px;font-weight:700;width:100%;margin-top:6px;transition:transform .08s,background .15s}
+.btn:active{transform:scale(.99)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn-google{background:#fff;color:#1f2937;border:1px solid #cbd5e1;border-radius:10px;padding:11px 14px;font-weight:600;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px}
+.sm{background:none;border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:6px 11px;font-size:14px;font-weight:500}
+.sm.del{color:#dc2626;border-color:rgba(220,38,38,.3)}
+.mut{color:var(--mut);font-size:14px}
+.chip{display:inline-block;background:var(--bg);border:1px solid var(--bd);border-radius:20px;padding:3px 10px;font-size:13px;margin:2px 4px 2px 0;font-weight:500}
+.pre{white-space:pre-wrap;margin:6px 0}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+
+/* Barra de abas flutuante */
+nav{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  width:calc(100% - 24px);max-width:520px;
+  display:flex;gap:4px;padding:6px;
+  background:#0B192C;border:1px solid #243f66;border-radius:26px;
+  box-shadow:0 10px 28px rgba(7,17,30,.38);z-index:20
+}
+nav button{flex:1;background:none;border:0;padding:7px 2px;color:#94a3b8;font-size:11px;border-radius:20px;transition:all .15s}
+nav button b{display:block;font-size:18px;font-weight:400;line-height:1.15}
+nav button.on{background:var(--ball);color:var(--onball);font-weight:700}
+
+.modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.modes button{background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:20px;padding:6px 13px;font-size:14px;font-weight:500}
+.modes button.on{background:#0B192C;color:var(--ball);border-color:#0B192C;font-weight:600}
+svg#court{width:100%;max-width:360px;display:block;margin:8px auto;touch-action:manipulation;border-radius:10px}
+.empty{color:var(--mut);padding:8px 0}
+a{color:var(--ac)}
+.div-or{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--mut);font-size:13px}
+.div-or::before,.div-or::after{content:"";flex:1;height:1px;background:var(--bd)}
+.pt-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--bd);font-size:14px}
+.pt-badge{background:var(--ball);color:var(--onball);font-weight:700;border-radius:12px;padding:2px 8px;font-size:12px;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="top-wrap">
+  <header>
+    <h1>Tênis <span class="pro">Rent a Pro</span></h1>
+    <div id="hb"></div>
+  </header>
+</div>
+<div id="pn"></div>
+<main id="app"></main>
+<nav id="nav"></nav>
+
+<script>
+const SUPABASE_URL = 'https://xvvacsuhaycooedzfxxu.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable__8--jJvanHRyUTMfRg8F-Q_0_CCrWwV';
+
+const sb = window.supabase
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+const K='rentapro-tenis-v2';
+let S=null;
+try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
+S=S||{treinos:[],quadras:[],sp:{},ptLog:[],nt:[],news:[]};
+S.sp=S.sp||{};S.ptLog=S.ptLog||[];S.nt=S.nt||[];S.news=S.news||[];
+
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=id=>document.getElementById(id);
+
+const TABS=[
+  ['home','✨','Montar'],
+  ['quadra','📐','Quadra'],
+  ['plano','🗓️','Plano'],
+  ['videos','🎬','Vídeos'],
+  ['news','📰','News']
+];
+const MODOS=[['aluno','Aluno'],['prof','Professor'],['cone','Cone'],['alvo','Alvo'],['del','Apagar']];
+let tab='home',modo='aluno',cur=[],montarModo='ia';
+
+/* ---------- Sincronização com Banco de Dados Supabase ---------- */
+async function syncPerfilDB(){
+  if(!sb || !S.u || !S.u.e) return;
+  try{
+    await sb.from('professores').upsert({
+      email: S.u.e.toLowerCase(),
+      nome: S.u.n,
+      telefone: S.u.t || '',
+      cep: S.u.p || '',
+      pontos: pts(),
+      historico: S.ptLog.slice(0,50),
+      lgpd_aceite: true,
+      atualizado_em: new Date().toISOString()
+    }, { onConflict: 'email' });
+  }catch(e){}
+}
+
+async function carregarPerfilDB(email){
+  if(!sb || !email) return;
+  try{
+    const { data } = await sb.from('professores').select('*').eq('email', email.toLowerCase()).maybeSingle();
+    if(data){
+      S.u = {
+        n: data.nome || S.u?.n || '',
+        e: data.email,
+        t: data.telefone || S.u?.t || '',
+        p: data.cep || S.u?.p || '',
+        google: true
+      };
+      if(Array.isArray(data.historico) && data.historico.length > S.ptLog.length){
+        S.ptLog = data.historico;
+      }
+      save();
+    }
+  }catch(e){}
+}
+
+/* ---------- Chamada Segura à API do Gemini via Vercel (/api/gemini) ---------- */
+async function askGemini(promptText, useSearch=false){
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: promptText, useSearch })
+  });
+  const data = await res.json();
+  if(!res.ok){
+    throw new Error(data.error || 'Erro ao conectar com a IA.');
+  }
+  return data.result;
+}
+
+/* ---------- Pontuação por Ação Real e Extrato ---------- */
+const pts=()=>S.ptLog.reduce((a,x)=>a+(+x.p||0),0);
+const unread=()=>S.nt.filter(x=>!x.r).length;
+
+function addN(t){
+  S.nt.unshift({t,d:new Date().toLocaleDateString('pt-BR'),r:0});
+  S.nt=S.nt.slice(0,25);
+}
+
+function gainPts(pontos, motivo){
+  const d=new Date();
+  const dt=d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  S.ptLog.unshift({p:pontos,m:motivo,d:dt});
+  S.ptLog=S.ptLog.slice(0,100);
+  addN(`+${pontos} pts: ${motivo}`);
+  save();
+  hdr();
+  syncPerfilDB();
+}
+
+function semNot(){
+  const d=new Date(),wk=d.getFullYear()+'-'+(d.getMonth()+1);
+  if(S.nw===wk)return;
+  S.nw=wk;
+  const m=ANO.find(x=>x.n===(d.getMonth()+1));
+  if(m)addN(`Objetivo do mês (${m.t}): ${m.f}`);
+  save();
+}
+
+/* ---------- Cabeçalho e Painéis Superiores ---------- */
+let pnm='';
+function hdr(){
+  const u=S.u;
+  $('hb').innerHTML=u
+    ? `<button class="pts-btn" onclick="togP()" aria-label="Extrato de pontos">⭐ ${pts()}</button><button onclick="togN()" aria-label="Notificações">🔔${unread()?'<i class="bg">'+unread()+'</i>':''}</button><button id="av" onclick="togA()" aria-label="Perfil">${esc(u.n.trim().charAt(0).toUpperCase())}</button>`
+    : '';
+}
+function closeP(){pnm='';const p=$('pn');if(p)p.innerHTML=''}
+
+function togP(){
+  if(pnm==='p'){closeP();return}pnm='p';
+  const lista=S.ptLog.length
+    ? S.ptLog.map(x=>`<div class="pt-row"><div><b>${esc(x.m)}</b><div class="mut" style="font-size:12px">${esc(x.d)}</div></div><span class="pt-badge">+${x.p} pts</span></div>`).join('')
+    : '<div class="empty">Você ainda não pontuou. Gere um plano de aula, grave um relato, salve uma quadra ou busque vídeos/notícias para ganhar pontos!</div>';
+  $('pn').innerHTML=`<div class="card"><b>Extrato de Pontuação (${pts()} pts)</b><div class="mut" style="margin-bottom:6px">Seus pontos são conquistados ao utilizar as ferramentas do app:</div>${lista}<div class="acts"><button class="sm" onclick="closeP()">Fechar</button></div></div>`;
+}
+
+function togN(){
+  if(pnm==='n'){closeP();return}pnm='n';
+  $('pn').innerHTML='<div class="card"><b>Notificações</b>'+(S.nt.length?S.nt.map(x=>`<div class="pre" style="border-top:1px solid var(--bd);padding-top:6px">${esc(x.t)} <span class="mut">${esc(x.d)}</span></div>`).join(''):'<div class="empty">Sem notificações.</div>')+'<div class="acts"><button class="sm" onclick="closeP()">Fechar</button></div></div>';
+  S.nt.forEach(x=>x.r=1);save();hdr();
+}
+
+function togA(){
+  if(pnm==='a'){closeP();return}pnm='a';
+  const u=S.u;
+  $('pn').innerHTML=`<div class="card">
+    <b>${esc(u.n)}</b>
+    <div class="mut">${esc(u.e)}</div>
+    <div class="mut">Pontuação acumulada: <b>${pts()} pts</b> (${S.ptLog.length} ações)</div>
+    <div class="acts">
+      <button class="sm" onclick="vCad()">Editar dados</button>
+      <button class="sm del" onclick="sairConta()">Sair</button>
+    </div>
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--bd)">
+      <b>Ricardo Matos</b>
+      <div class="mut">Consultor de modalidade Tênis</div>
+      <div class="acts">
+        <a class="sm" style="text-decoration:none" href="https://instagram.com/_riamatos" target="_blank" rel="noopener">Instagram @_riamatos</a>
+        <a class="sm" style="text-decoration:none" href="https://wa.me/5511975125946" target="_blank" rel="noopener">WhatsApp (11) 97512-5946</a>
+        <a class="sm" style="text-decoration:none" href="mailto:ricardomatos.ci@gmail.com">ricardomatos.ci@gmail.com</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- Cadastro e Login com Google (Supabase Auth) ---------- */
+function vCad(){
+  closeP();$('nav').innerHTML='';const u=S.u||{};
+  $('app').innerHTML=`<h2>${S.u?'Editar cadastro':'Acesso Rent a Pro'}</h2>
+  <div class="mut">Entre com sua conta Google ou preencha seus dados de professor para acessar.</div>
+  <div class="card">
+    <button class="btn-google" onclick="loginGoogle()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continuar com Google
+    </button>
+    <div class="div-or">ou preencha manualmente</div>
+    <input id="cn" placeholder="Nome completo" autocomplete="name" value="${esc(u.n||'')}">
+    <input id="ce" type="email" placeholder="E-mail" value="${esc(u.e||'')}">
+    <div class="row">
+      <input id="ct" type="tel" inputmode="tel" placeholder="WhatsApp com DDD" value="${esc(u.t||'')}">
+      <input id="cp" inputmode="numeric" placeholder="CEP (opcional)" value="${esc(u.p||'')}">
+    </div>
+    <label class="mut" style="display:flex;gap:8px;margin-top:8px;align-items:flex-start">
+      <input id="ck" type="checkbox" style="width:auto;margin-top:3px" ${S.u?'checked':''}>
+      <span>Concordo com o uso dos meus dados para cadastro e contato da equipe Tênis Rent a Pro, conforme a LGPD.</span>
+    </label>
+    <button class="btn" id="cadb" onclick="saveCad()">${S.u?'Salvar alterações':'Entrar no App'}</button>
+    ${S.u?'<button class="sm" style="margin-top:8px;width:100%" onclick="render()">Cancelar</button>':''}
+    <div class="mut" id="cm" style="margin-top:6px"></div>
+  </div>`;
+}
+
+async function loginGoogle(){
+  const m=$('cm');
+  if(!sb){
+    m.textContent='Erro ao carregar conexão com o banco.';
+    return;
+  }
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin }
+  });
+  if(error) m.textContent='Erro ao iniciar login com Google: '+error.message;
+}
+
+async function saveCad(){
+  const g=i=>$(i).value.trim(),d=i=>g(i).replace(/\D/g,''),m=$('cm'),btn=$('cadb');
+  const u={n:g('cn'),e:g('ce'),t:d('ct'),p:d('cp')};
+  const err=u.n.split(/\s+/).length<2?'Informe seu nome completo.':!/^\S+@\S+\.\S+$/.test(u.e)?'E-mail inválido.':(u.t && (u.t.length<10||u.t.length>11))?'Telefone inválido (use o DDD).':(u.p && u.p.length!==8)?'CEP inválido (8 números).':!$('ck').checked?'É preciso concordar com o termo LGPD.':'';
+  if(err){m.textContent=err;return}
+  btn.disabled=true;btn.textContent='Salvando...';
+  S.u=u;save();
+  await syncPerfilDB();
+  tab='home';render();
+}
+
+async function sairConta(){
+  if(!confirm('Deseja sair da sua conta neste aparelho?'))return;
+  if(sb) try{await sb.auth.signOut()}catch(e){}
+  S.u=null;save();render();
+}
+
+/* ---------- Navegação ---------- */
+function nav(){
+  $('nav').innerHTML=TABS.map(t=>`<button class="${t[0]===(tab==='aula'?'plano':tab)?'on':''}" onclick="go('${t[0]}')"><b>${t[1]}</b>${t[2]}</button>`).join('');
+}
+function go(t){tab=t;render()}
+function render(){
+  closeP();
+  if(!S.u){hdr();vCad();return}
+  semNot();hdr();nav();
+  ({home:vHome,quadra:vQuadra,plano:vPlano,aula:vAula,videos:vVideos,news:vNews})[tab]();
+  window.scrollTo(0,0);
+}
+
+/* ---------- Modelos de Aulas & Auxiliares ---------- */
+const B=a=>a.map(x=>({t:x[0],m:x[1],x:x[2]}));
+const BL=()=>B([['Roda inicial e combinados',5,''],['Aquecimento',10,''],['Parte principal',15,''],['Parte final',15,''],['Feedback e volta à calma',5,'']]);
+const FB='Incentivar os alunos a verbalizarem o que aprenderam, respondendo a perguntas sobre as posições e os golpes praticados.';
+const RODA='Chamada, explicar o objetivo da aula e fazer os combinados.';
+const SEED={
+  '10-0':{c:'Desenvolver os movimentos básicos do tênis e capacidades físicas de forma lúdica, com pega-pega e jogo do espelho, finalizando com o Rei da Quadra adaptado.',o:'Manter a aula dinâmica e lúdica.',mt:'Raquetes, bolas vermelhas, cones, pratinhos',b:B([['Roda inicial e combinados',5,RODA],['Aquecimento',10,'Pega-pega surfistinha espelho (7 min) e Jogo do espelho (3 min) imitando forehand, backhand, voleio e posição de expectativa.'],['Apresentação e treino dos movimentos',15,'Circuito em 4 estações: biomecânica do saque e rebatidas de bolas lançadas pelo professor (forehand, backhand, voleio e smash).'],['Jogão final: Rei da Quadra adaptado',15,'Quadra dividida em 2 mini-quadras para 4 equipes com alta rotatividade.'],['Feedback e volta à calma',5,FB]])}
+};
+const tot=p=>p.b.reduce((a,x)=>a+(+x.m||0),0);
+const mins=k=>{const p=S.sp[k]||SEED[k];return p&&p.b?tot(p):0};
+const exPlans=()=>[...new Set([...Object.keys(SEED),...Object.keys(S.sp)])].filter(k=>mins(k)>0).slice(0,3).map(k=>{const p=S.sp[k]||SEED[k];return{c:p.c,o:p.o,mt:p.mt,b:p.b.map(x=>({t:x.t,m:+x.m,x:x.x}))}});
+
+/* ---------- Aba Montar (Criação IA + Gravação de Áudio Unificadas) ---------- */
+const TQ=['aluno','prof','cone','alvo'];
+const qdOf=a=>(Array.isArray(a)?a:[]).slice(0,3).map(q=>({n:String(q&&q.n||'Quadra'),m:(Array.isArray(q&&q.m)?q.m:[]).slice(0,30).map(p=>({x:Math.max(15,Math.min(205,+p.x||110)),y:Math.max(15,Math.min(425,+p.y||220)),t:TQ.includes(p.t)?p.t:'aluno'}))})).filter(q=>q.m.length);
+function courtOf(m){const o=cur;cur=m;const s=courtSvg();cur=o;return s}
+const qdHtml=a=>(a||[]).map((q,i)=>`<div style="margin-top:12px"><b>Quadra: ${esc(q.n)}</b>${courtOf(q.m)}<div class="mut">Verde: aluno · Azul: prof · Laranja: cone · Vermelho: alvo</div><button class="sm" onclick="saveQ2(${i})">Salvar disposição na aba Quadra</button></div>`).join('');
+
+function saveQ2(i){
+  const q=gen.qd[i];
+  S.quadras.push({nome:(gen.n||'Aula')+': '+q.n,m:JSON.parse(JSON.stringify(q.m))});
+  gainPts(10,'Salvou diagrama tático da aula');
+  $('hmsg').textContent='Disposição salva na aba Quadra (+10 pts)!';
+}
+
+let gen=null,hk='',hxv='';
+let rel='',rec=false,ger2=null,sr=null;
+
+const resH=()=>{if(!gen)return '';return `<div class="card"><b>${esc(gen.n||'Plano gerado')}</b><div class="mut">Total: ${tot(gen)} min</div><div class="pre">${esc(gen.c)}</div>${gen.o?`<div class="mut">${esc(gen.o)}</div>`:''}${gen.mt?`<div class="mut">Materiais: ${esc(gen.mt)}</div>`:''}`+gen.b.map(x=>`<div style="margin-top:10px"><b>${esc(x.t)}</b> <span class="chip">${esc(x.m)} min</span><div class="pre">${esc(x.x)}</div></div>`).join('')+`${qdHtml(gen.qd)}<div class="acts"><button class="sm" onclick="saveH()">Salvar nos meus treinos</button>${hk?'<button class="sm" onclick="saveW()">Vincular ao mês e editar</button>':''}<button class="sm" onclick="gerarH()">Gerar variação</button></div></div>`};
+
+const resR=()=>{if(!ger2)return '';return `<div class="card"><b>${esc(ger2.n||'Aula registrada por voz')}</b><div class="mut">Total: ${tot(ger2)} min</div><div class="pre">${esc(ger2.c)}</div>${ger2.o?`<div class="mut">${esc(ger2.o)}</div>`:''}${ger2.mt?`<div class="mut">Materiais: ${esc(ger2.mt)}</div>`:''}`+ger2.b.map(x=>`<div style="margin-top:10px"><b>${esc(x.t)}</b> <span class="chip">${esc(x.m)} min</span><div class="pre">${esc(x.x)}</div></div>`).join('')+`<div class="acts"><button class="sm" onclick="saveR()">Salvar nos meus treinos</button><button class="sm" onclick="relatoIA()">Gerar de novo</button></div></div>`};
+
+function vHome(){
+  const opts='<option value="">Sem vínculo com objetivo mensal</option>'+ANO.map(m=>`<option value="${m.n}-0" ${hk===m.n+'-0'?'selected':''}>${m.t} — ${esc(m.f)}</option>`).join('');
+  const lista=S.treinos.length
+    ? S.treinos.map((t,i)=>`<div class="card"><b>${esc(t.titulo)}</b><div class="mut">${esc([t.d,t.aluno,t.min?t.min+' min':''].filter(Boolean).join(' · '))}</div><div class="pre">${esc(t.texto)}</div><div class="acts"><button class="sm del" onclick="delT(${i})">Excluir</button></div></div>`).join('')
+    : '<div class="empty">Nenhuma aula salva ainda. Crie um plano pela IA ou grave o relato de uma aula dada.</div>';
+
+  const painelIA=`<div class="card">
+    <div class="mut" style="margin-bottom:6px">Informe a turma e os materiais. A IA monta um plano de 50 min e desenha as quadras.</div>
+    <div class="row"><input id="hn" type="number" inputmode="numeric" placeholder="Nº de alunos" value="${esc(S.al||'')}" oninput="S.al=this.value;save()"><input id="hi" placeholder="Idade/Nível (ex.: 7 a 9 anos)" value="${esc(S.id||'')}" oninput="S.id=this.value;save()"></div>
+    <textarea id="hm" placeholder="Materiais disponíveis (ex.: 10 raquetes, 20 bolas vermelhas, cones, arcos)" oninput="S.mat=this.value;save()">${esc(S.mat||'')}</textarea>
+    <select id="hs" onchange="hk=this.value">${opts}</select>
+    <input id="hx" placeholder="Foco específico ou pedido extra (opcional)" value="${esc(hxv)}" oninput="hxv=this.value">
+    <button class="btn" id="hb" onclick="gerarH()">Gerar plano de aula (+15 pts)</button>
+    <div class="mut" id="hmsg" style="margin-top:6px"></div>
+  </div><div id="hres">${resH()}</div>`;
+
+  const painelAudio=`<div class="card">
+    <div class="mut" style="margin-bottom:6px">Conte como foi a aula que você acabou de dar. A IA organiza seu relato falado em um plano estruturado.</div>
+    <button class="btn" id="rmic" onclick="micToggle()">${rec?'⏹ Parar gravação':'🎙️ Gravar áudio da aula'}</button>
+    <textarea id="rel" style="min-height:130px" placeholder="Sua fala aparece aqui automaticamente. Você também pode digitar ou editar o texto..." oninput="rel=this.value">${esc(rel)}</textarea>
+    <button class="btn" id="rgb" onclick="relatoIA()">Transformar relato em plano (+15 pts)</button>
+    <div class="mut" id="rmsg" style="margin-top:6px"></div>
+  </div><div id="rres">${resR()}</div>`;
+
+  $('app').innerHTML=`<h2>Montar treino</h2>
+  <div class="modes">
+    <button class="${montarModo==='ia'?'on':''}" onclick="montarModo='ia';vHome()">✨ Criar com IA</button>
+    <button class="${montarModo==='audio'?'on':''}" onclick="montarModo='audio';vHome()">🎙️ Gravar áudio</button>
+  </div>
+  ${montarModo==='ia'?painelIA:painelAudio}
+  <h2>Minhas aulas salvas</h2>${lista}`;
+}
+
+async function gerarH(){
+  const btn=$('hb'),msg=$('hmsg'),mat=$('hm').value.trim();
+  if(!mat){$('hm').focus();msg.textContent='Informe os materiais disponíveis.';return}
+  let sw='nenhum';
+  if(hk){const q=hk.split('-').map(Number),m=ANO.find(x=>x.n===q[0]);if(m)sw=m.t+': '+m.f}
+  const fmt=JSON.stringify({q:[{n:'nome da atividade',m:[{x:110,y:300,t:'aluno'}]}],n:'título curto da aula',c:'conteúdo da aula',o:'observação',mt:'materiais usados',b:[{t:'título do bloco',m:5,x:'descrição'}]});
+  const prompt='Você ajuda um professor de tênis do projeto Rent a Pro a montar planos de aula. Monte um plano de 50 minutos em português do Brasil.\n'+
+  'Número de alunos: '+($('hn').value||'não informado')+'\nIdade/Nível: '+($('hi').value.trim()||'não informada')+'\nMateriais disponíveis: '+mat+'\nObjetivo mensal: '+sw+'\nPedido extra: '+($('hx').value.trim()||'nenhum')+'\n'+
+  'Em q, desenhe a quadra de 1 a 3 atividades da parte principal e final: coordenadas x de 20 a 200 e y de 25 a 415 (rede em y=220), t igual a aluno, prof, cone ou alvo, de 6 a 20 marcadores por desenho.\n'+
+  'Regras: use somente os materiais disponíveis; adapte estações e rodízios ao número de alunos; blocos na ordem roda inicial 5 min, aquecimento 10, parte principal 15, parte final 15, feedback e volta à calma 5 (total 50); aula dinâmica, sem filas grandes.\n'+
+  (gen?'Gere uma versão diferente da anterior, sem repetir: '+JSON.stringify(gen.b.map(x=>x.t))+'\n':'')+
+  'Exemplos de estilo: '+JSON.stringify(exPlans())+'\nResponda somente com JSON neste formato: '+fmt;
+  btn.disabled=true;btn.textContent='Gerando plano...';msg.textContent='';
+  let r;
+  try{r=await askGemini(prompt)}
+  catch(e){msg.textContent=e.message;btn.disabled=false;btn.textContent='Gerar plano de aula (+15 pts)';return}
+  if(!r||!Array.isArray(r.b)||!r.b.length){msg.textContent='Resposta incompleta. Tente de novo.';btn.disabled=false;btn.textContent='Gerar plano de aula (+15 pts)';return}
+  gen={n:String(r.n||''),c:String(r.c||''),o:String(r.o||''),mt:String(r.mt||mat),b:r.b.map(x=>({t:String(x.t||''),m:+x.m||0,x:String(x.x||'')})),qd:qdOf(r.q)};
+  gainPts(15,'Gerou plano de aula com IA');
+  vHome();
+}
+
+function saveH(){
+  S.treinos.unshift({titulo:gen.n||'Treino gerado',d:new Date().toLocaleDateString('pt-BR'),aluno:(S.al?S.al+' alunos':'')+(S.al&&S.id?', ':'')+(S.id||''),min:String(tot(gen)),texto:gen.b.map(x=>x.t+' ('+x.m+' min): '+x.x).join('\n')});
+  save();vHome();
+}
+function saveW(){
+  S.sp[hk]={c:gen.c,o:gen.o,mt:gen.mt,b:JSON.parse(JSON.stringify(gen.b))};save();abrirA(hk);
+}
+
+/* Gravação de Áudio e Relato */
+function setRec(v){rec=v;const b=$('rmic');if(b)b.textContent=v?'⏹ Parar gravação':'🎙️ Gravar áudio da aula'}
+function addTxt(t){rel=(rel?rel+' ':'')+String(t).trim();if($('rel'))$('rel').value=rel}
+function showTxt(p){if($('rel'))$('rel').value=rel+(p?(rel?' ':'')+p:'')}
+function micToggle(){
+  const msg=$('rmsg');msg.textContent='';
+  if(rec){if(sr)sr.stop();return}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){msg.textContent='Gravação direta indisponível neste navegador. Toque no campo de texto e use o microfone do teclado do celular.';return}
+  sr=new SR();sr.lang='pt-BR';sr.continuous=true;sr.interimResults=true;
+  sr.onstart=()=>setRec(true);sr.onend=()=>{setRec(false);showTxt('')};
+  sr.onerror=e=>{msg.textContent='Não consegui acessar o microfone ('+(e.error||'erro')+'). Use o microfone do teclado do celular.'};
+  sr.onresult=e=>{let f='',p='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)f+=t+' ';else p+=t}if(f)addTxt(f);showTxt(p)};
+  try{sr.start()}catch(e){}
+}
+async function relatoIA(){
+  const msg=$('rmsg'),btn=$('rgb');rel=$('rel').value.trim();
+  if(rel.length<15){msg.textContent='Grave ou escreva o relato da aula primeiro.';return}
+  const fmt=JSON.stringify({n:'título curto da aula',c:'conteúdo da aula',o:'observação',mt:'materiais usados',b:[{t:'título do bloco',m:5,x:'descrição'}]});
+  const prompt='Você ajuda um professor de tênis. Abaixo está o relato falado de uma aula que ele JÁ DEU. Transforme em um plano de aula organizado, em português do Brasil. Seja fiel ao relato: não invente atividades não mencionadas; corrija erros de transcrição; organize em blocos na ordem em que aconteceram.\n'+
+  'Turma: '+(S.al?S.al+' alunos':'não informada')+', '+(S.id||'')+'\nRelato: '+rel+'\nResponda somente com JSON neste formato: '+fmt;
+  btn.disabled=true;btn.textContent='Organizando relato...';msg.textContent='';
+  let r;
+  try{r=await askGemini(prompt)}
+  catch(e){msg.textContent=e.message;btn.disabled=false;btn.textContent='Transformar relato em plano (+15 pts)';return}
+  if(!r||!Array.isArray(r.b)||!r.b.length){msg.textContent='Resposta incompleta. Tente de novo.';btn.disabled=false;btn.textContent='Transformar relato em plano (+15 pts)';return}
+  ger2={n:String(r.n||''),c:String(r.c||''),o:String(r.o||''),mt:String(r.mt||''),b:r.b.map(x=>({t:String(x.t||''),m:+x.m||0,x:String(x.x||'')}))};
+  gainPts(15,'Transformou relato de áudio em plano');
+  vHome();
+}
+function saveR(){
+  S.treinos.unshift({titulo:ger2.n||'Aula registrada',d:new Date().toLocaleDateString('pt-BR'),aluno:(S.al?S.al+' alunos':'')+(S.al&&S.id?', ':'')+(S.id||''),min:String(tot(ger2)),texto:ger2.b.map(x=>x.t+' ('+x.m+' min): '+x.x).join('\n')});
+  ger2=null;rel='';save();vHome();
+}
+function delT(i){if(confirm('Excluir esta aula salva?')){S.treinos.splice(i,1);save();vHome()}}
+
+/* ---------- Aba Quadra ---------- */
+function courtSvg(){
+  let n=0;
+  const m=cur.map(p=>{
+    if(p.t==='aluno'){n++;return `<g><circle cx="${p.x}" cy="${p.y}" r="11" fill="#22c55e" stroke="#fff" stroke-width="2"/><text x="${p.x}" y="${p.y+4.5}" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">${n}</text></g>`}
+    if(p.t==='prof')return `<g><circle cx="${p.x}" cy="${p.y}" r="11" fill="#0B192C" stroke="#A3E635" stroke-width="2"/><text x="${p.x}" y="${p.y+4.5}" text-anchor="middle" font-size="13" font-weight="700" fill="#A3E635">P</text></g>`;
+    if(p.t==='cone')return `<polygon points="${p.x},${p.y-10} ${p.x+9},${p.y+8} ${p.x-9},${p.y+8}" fill="#f59e0b" stroke="#fff" stroke-width="1.5"/>`;
+    return `<g><circle cx="${p.x}" cy="${p.y}" r="10" fill="none" stroke="#ef4444" stroke-width="3"/><circle cx="${p.x}" cy="${p.y}" r="3" fill="#ef4444"/></g>`}).join('');
+  return `<svg id="court" viewBox="0 0 220 440" xmlns="http://www.w3.org/2000/svg"><rect width="220" height="440" fill="var(--court)"/>
+  <g stroke="var(--ln)" stroke-width="2" fill="none"><rect x="20" y="25" width="180" height="390"/><line x1="42.5" y1="25" x2="42.5" y2="415"/><line x1="177.5" y1="25" x2="177.5" y2="415"/>
+  <line x1="42.5" y1="115" x2="177.5" y2="115"/><line x1="42.5" y1="325" x2="177.5" y2="325"/><line x1="110" y1="115" x2="110" y2="325"/></g>
+  <line x1="12" y1="220" x2="208" y2="220" stroke="#A3E635" stroke-width="4" stroke-dasharray="5 3"/>${m}</svg>`;
+}
+function vQuadra(){
+  const salvas=S.quadras.length?S.quadras.map((q,i)=>`<div class="card"><b>${esc(q.nome)}</b> <span class="mut">${q.m.length} itens</span>
+  <div class="acts"><button class="sm" onclick="abrirQ(${i})">Abrir</button><button class="sm del" onclick="delQ(${i})">Excluir</button></div></div>`).join(''):'<div class="empty">Nenhuma disposição salva. Monte uma na quadra acima.</div>';
+  $('app').innerHTML=`<h2>Disposição na quadra</h2><div class="mut">Escolha o item e toque na quadra para posicionar.</div>
+  <div class="modes">${MODOS.map(x=>`<button class="${x[0]===modo?'on':''}" onclick="setModo('${x[0]}')">${x[1]}</button>`).join('')}<button onclick="cur=[];vQuadra()">Limpar</button></div>
+  <div id="cw">${courtSvg()}</div>
+  <div class="card"><input id="qn" placeholder="Nome da disposição (ex.: Cross de backhand)"><button class="btn" onclick="saveQ()">Salvar disposição (+10 pts)</button></div>
+  <h2>Disposições salvas</h2>${salvas}`;
+  bindCourt();
+}
+function bindCourt(){
+  const s=$('court');
+  s.onclick=e=>{
+    const pt=s.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
+    const p=pt.matrixTransform(s.getScreenCTM().inverse());
+    const x=Math.round(p.x),y=Math.round(p.y);
+    if(modo==='del'){
+      let b=-1,d=18;cur.forEach((q,i)=>{const k=Math.hypot(q.x-x,q.y-y);if(k<d){d=k;b=i}});
+      if(b>=0)cur.splice(b,1);
+    }else cur.push({x,y,t:modo});
+    $('cw').innerHTML=courtSvg();bindCourt();
+  };
+}
+function setModo(m){modo=m;vQuadra()}
+function saveQ(){
+  const nome=$('qn').value.trim();if(!nome){$('qn').focus();return}
+  if(!cur.length){alert('Posicione pelo menos um item na quadra antes de salvar.');return}
+  S.quadras.push({nome,m:JSON.parse(JSON.stringify(cur))});
+  gainPts(10,`Criou diagrama de quadra "${nome}"`);
+  vQuadra();
+}
+function abrirQ(i){cur=JSON.parse(JSON.stringify(S.quadras[i].m));tab='quadra';render()}
+function delQ(i){if(confirm('Excluir esta disposição?')){S.quadras.splice(i,1);save();vQuadra()}}
+
+/* ---------- Aba Plano Anual (Somente Objetivos Gerais) ---------- */
+const ANO=[
+  {n:2,t:'Fevereiro',f:'Adaptação aos materiais, tempo de bola e fundamentos iniciais de Forehand e Backhand.'},
+  {n:3,t:'Março',f:'Regras básicas, deslocamento (Footwork / Split Step) e introdução ao jogo de rede (voleios).'},
+  {n:4,t:'Abril',f:'Consolidação do jogo de rede (voleios e smash), mecânica do saque e devolução.'},
+  {n:5,t:'Maio',f:'Reforço técnico e integração dos golpes de fundo, rede e situações reais de ponto.'},
+  {n:6,t:'Junho',f:'Domínio das empunhaduras (Continental e Eastern) e encerramento lúdico do 1º semestre.'},
+  {n:8,t:'Agosto',f:'Acolhimento de novos alunos, revisão das empunhaduras, golpes de base e voleios.'},
+  {n:9,t:'Setembro',f:'Transição fundo-rede, agilidade, aprimoramento do smash, saque e devolução.'},
+  {n:10,t:'Outubro',f:'Preparação para aula aberta, dinâmicas de integração e jogos recreativos.'},
+  {n:11,t:'Novembro',f:'Evolução técnica (preparação, contato e terminação) e jogos com contagem oficial.'},
+  {n:12,t:'Dezembro',f:'Festivais internos, atividades lúdicas e jogos cooperativos de encerramento.'}
+];
+let sem=new Date().getMonth()>=7?2:1;
+
+function vPlano(){
+  const mes=new Date().getMonth()+1;
+  const ms=ANO.filter(m=>sem===1?m.n<=6:m.n>=8);
+  $('app').innerHTML=`<h2>Planejamento anual</h2>
+  <div class="mut">Objetivos gerais de cada mês para orientar o planejamento livre de cada professor.</div>
+  <div class="modes"><button class="${sem===1?'on':''}" onclick="sem=1;vPlano()">1º semestre</button><button class="${sem===2?'on':''}" onclick="sem=2;vPlano()">2º semestre</button></div>`+
+  ms.map(m=>{
+    const k=m.n+'-0';
+    return `<div class="card" style="${m.n===mes?'border-color:var(--ball);border-width:2px':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <b>${m.t}</b>
+        ${m.n===mes?'<span class="pt-badge">Mês atual</span>':''}
+      </div>
+      <div class="pre">${esc(m.f)}</div>
+      ${hasP(k)?'<div class="mut">Plano personalizado salvo ('+mins(k)+' min)</div>':''}
+      <div class="acts">
+        <button class="sm" onclick="abrirA('${k}')">${hasP(k)?'Editar meu plano do mês':'Montar minha aula do mês'}</button>
+        <button class="sm" onclick="novoT('${k}')">Gerar com IA</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getP(k){let p=S.sp[k];if(!p){const s=SEED[k];p=s?JSON.parse(JSON.stringify(s)):{c:'',o:'',mt:'',b:BL()}}S.sp[k]=p;return p}
+const hasP=k=>{const p=S.sp[k]||SEED[k];return p&&p.c};
+let ek='';
+const P=()=>getP(ek);
+function abrirA(k){ek=k;tab='aula';render()}
+function vAula(){
+  const p=getP(ek),q=ek.split('-').map(Number),m=ANO.find(x=>x.n===q[0]);
+  $('app').innerHTML=`<h2>Plano de aula — ${m.t}</h2><div class="mut">Objetivo geral: ${esc(m.f)}</div>
+  <div class="card"><b>Total: <span id="tt">${tot(p)}</span> min</b>
+  <textarea placeholder="Conteúdo / Tema da sua aula" oninput="P().c=this.value;save()">${esc(p.c)}</textarea>
+  <input placeholder="Observação pedagógica" value="${esc(p.o)}" oninput="P().o=this.value;save()">
+  <input placeholder="Materiais necessários" value="${esc(p.mt)}" oninput="P().mt=this.value;save()"></div>`+
+  p.b.map((x,i)=>`<div class="card"><div class="row"><input value="${esc(x.t)}" oninput="P().b[${i}].t=this.value;save()"><input type="number" inputmode="numeric" style="max-width:90px" value="${esc(x.m)}" oninput="P().b[${i}].m=this.value;save();$('tt').textContent=tot(P())"></div><textarea oninput="P().b[${i}].x=this.value;save()">${esc(x.x)}</textarea><button class="sm del" onclick="delB(${i})">Remover bloco</button></div>`).join('')+
+  `<div class="acts"><button class="sm" onclick="addB()">Adicionar bloco</button><button class="sm" onclick="salvarPlanoManual()">Salvar plano (+10 pts)</button><button class="sm" onclick="go('plano')">Voltar</button></div>`;
+}
+function salvarPlanoManual(){
+  save();
+  gainPts(10,'Salvou plano personalizado no planejamento anual');
+  go('plano');
+}
+function addB(){P().b.push({t:'Novo bloco',m:5,x:''});save();vAula()}
+function delB(i){P().b.splice(i,1);save();vAula()}
+function novoT(k){hk=k;montarModo='ia';tab='home';render()}
+
+/* ---------- Aba Vídeos ---------- */
+let vw='';
+const eq=s=>encodeURIComponent(s);
+const slug=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+const lk=(u,n)=>`<a class="sm" style="text-decoration:none" href="${u}" target="_blank" rel="noopener">${n}</a>`;
+const sugHtml=s=>`<div class="card"><b>${esc(s.t)}</b><div class="pre">${esc(s.p)}</div><div class="mut">Busca: ${esc(s.q)}</div><div class="acts">${lk('https://www.youtube.com/results?search_query='+eq(s.q),'YouTube')}${lk('https://www.tiktok.com/search?q='+eq(s.q),'TikTok')}${lk('https://www.instagram.com/explore/tags/'+slug(s.h||s.q)+'/','Instagram')}</div></div>`;
+
+function vVideos(){
+  if(!vw)vw=String(new Date().getMonth()+1);
+  if(!ANO.find(x=>String(x.n)===vw))vw='2';
+  const opts=ANO.map(m=>`<option value="${m.n}" ${String(m.n)===vw?'selected':''}>${m.t} — ${esc(m.f)}</option>`).join('');
+  const m=ANO.find(x=>String(x.n)===vw),lst=S.vs&&S.vs[vw];
+  $('app').innerHTML=`<h2>Sugestões de vídeos</h2><div class="mut">Ideias de exercícios e educativos alinhados ao objetivo geral do mês.</div><div class="card"><select onchange="vw=this.value;vVideos()">${opts}</select><div style="margin-top:6px"><b>Objetivo de ${esc(m.t)}:</b></div><div class="pre">${esc(m.f)}</div><button class="btn" id="vbt" onclick="sugerirV()">${lst?'Gerar novas sugestões (+10 pts)':'Sugerir vídeos do mês (+10 pts)'}</button><div class="mut" id="vmsg" style="margin-top:6px"></div></div>`+(lst?lst.map(sugHtml).join(''):'<div class="empty">Toque no botão acima para buscar ideias de vídeos.</div>');
+}
+async function sugerirV(){
+  const btn=$('vbt'),msg=$('vmsg');
+  const m=ANO.find(x=>String(x.n)===vw);
+  const fmt=JSON.stringify([{t:'tema do vídeo',p:'por que ajuda neste mês',q:'busca em português',h:'hashtag'}]);
+  const prompt='Você ajuda um professor de tênis. Sugira 5 ideias de vídeos de tênis ligadas ao objetivo mensal. Não invente títulos ou links falsos. Para cada ideia dê o tema, por que ajuda e uma busca curta em português (3 a 6 palavras) para YouTube/TikTok, além de uma hashtag sem acento em h.\nMês: '+m.t+'\nObjetivo geral: '+m.f+'\nResponda somente com um array JSON neste formato: '+fmt;
+  btn.disabled=true;btn.textContent='Buscando ideias...';msg.textContent='';
+  let r;
+  try{r=await askGemini(prompt)}
+  catch(e){msg.textContent=e.message;btn.disabled=false;btn.textContent='Sugerir vídeos do mês (+10 pts)';return}
+  if(!Array.isArray(r)||!r.length){msg.textContent='Resposta incompleta. Tente de novo.';btn.disabled=false;btn.textContent='Sugerir vídeos do mês (+10 pts)';return}
+  S.vs=S.vs||{};S.vs[vw]=r.slice(0,5).map(x=>({t:String(x.t||''),p:String(x.p||''),q:String(x.q||x.t||''),h:String(x.h||'')}));
+  gainPts(10,`Buscou referências de vídeos para ${m.t}`);
+  vVideos();
+}
+
+/* ---------- Aba News (Notícias de Tênis em Tempo Real) ---------- */
+function vNews(){
+  const lista=S.news.length
+    ? S.news.map(n=>`<div class="card">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+          <b>${esc(n.titulo)}</b>
+          ${n.fonte?`<span class="chip">${esc(n.fonte)}</span>`:''}
+        </div>
+        <div class="pre">${esc(n.resumo)}</div>
+        ${n.url?`<div class="acts"><a class="sm" style="text-decoration:none" href="${esc(n.url)}" target="_blank" rel="noopener">Ler matéria completa ↗</a></div>`:''}
+      </div>`).join('')
+    : '<div class="empty">Nenhuma notícia carregada ainda. Toque no botão acima para rastrear as últimas novidades do tênis!</div>';
+
+  $('app').innerHTML=`<h2>Tênis News</h2>
+  <div class="mut">Principais notícias do tênis mundial e brasileiro, torneios ATP/WTA e tênis juvenil com resumo e link direto.</div>
+  <div class="card">
+    <button class="btn" id="nbt" onclick="buscarNews()">🔄 Atualizar notícias de tênis (+10 pts)</button>
+    <div class="mut" id="nmsg" style="margin-top:6px">${S.newsAt?'Última atualização: '+esc(S.newsAt):''}</div>
+  </div>
+  ${lista}`;
+}
+
+async function buscarNews(){
+  const btn=$('nbt'),msg=$('nmsg');
+  const fmt=JSON.stringify([{titulo:'Manchete da notícia',fonte:'Nome do portal',resumo:'Resumo objetivo em 2 a 3 linhas',url:'https://link-real-da-materia'}]);
+  const prompt='Busque na web as 6 notícias mais recentes e relevantes sobre tênis (ATP, WTA, Grand Slams, João Fonseca, Bia Haddad, tênis brasileiro e mundial). Para cada notícia, entregue a manchete em português, o nome do portal/fonte, um resumo claro de 2 a 3 linhas e a URL real da matéria encontrada na busca. Responda somente com um array JSON neste formato: '+fmt;
+  btn.disabled=true;btn.textContent='Rastreando notícias...';msg.textContent='';
+  let r;
+  try{r=await askGemini(prompt, true)}
+  catch(e){msg.textContent=e.message;btn.disabled=false;btn.textContent='🔄 Atualizar notícias de tênis (+10 pts)';return}
+  if(!Array.isArray(r)||!r.length){msg.textContent='Não foi possível carregar notícias agora. Tente novamente.';btn.disabled=false;btn.textContent='🔄 Atualizar notícias de tênis (+10 pts)';return}
+  S.news=r.slice(0,6).map(x=>({
+    titulo:String(x.titulo||''),
+    fonte:String(x.fonte||''),
+    resumo:String(x.resumo||''),
+    url:String(x.url||'').startsWith('http')?String(x.url):''
+  })).filter(x=>x.titulo);
+  const d=new Date();
+  S.newsAt=d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  gainPts(10,'Atualizou o feed Tênis News');
+  vNews();
+}
+
+/* ---------- Inicialização + Escuta do Login Google ---------- */
+if(sb){
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if(session && session.user){
+      const meta = session.user.user_metadata || {};
+      const email = session.user.email;
+      if(!S.u || S.u.e !== email){
+        S.u = {
+          n: meta.full_name || meta.name || email.split('@')[0],
+          e: email,
+          t: S.u?.t || '',
+          p: S.u?.p || '',
+          google: true
+        };
+        save();
+        await carregarPerfilDB(email);
+        await syncPerfilDB();
+        render();
+      }
+    }
+  });
+}
+
+render();
+</script>
+</body>
+</html>
